@@ -22,7 +22,7 @@ class EthereumApi(object):
             self._abi = json.loads(file.read())
         # 合约账户节点
         self._default_account = default_account or self._w3.eth.accounts[1]
-        self._contract_address = "0xd35186CD127732BB876A634CF5f98F4ef121aA65"
+        self._contract_address = "0xaD3137bb6543DF54401cc23e67Ce81fCB944Bfa1 "
         self._contract = self._w3.eth.contract(self._contract_address, abi=self._abi)
 
     def create_account(self, passphrase: str):

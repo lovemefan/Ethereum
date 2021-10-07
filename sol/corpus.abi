@@ -7,39 +7,38 @@
 				"type": "address"
 			},
 			{
+				"name": "file_name",
+				"type": "string"
+			},
+			{
+				"name": "encry_key",
+				"type": "string"
+			}
+		],
+		"name": "insertvFileKey",
+		"outputs": [
+			{
+				"name": "success",
+				"type": "string"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "receiver",
+				"type": "address"
+			},
+			{
 				"name": "amount",
 				"type": "uint256"
 			}
 		],
 		"name": "mint",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "new_key",
-				"type": "string"
-			}
-		],
-		"name": "setKey",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "new_name",
-				"type": "string"
-			}
-		],
-		"name": "setName",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -69,12 +68,7 @@
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"name": "initalSupply",
-				"type": "uint256"
-			}
-		],
+		"inputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
 		"type": "constructor"
@@ -136,25 +130,20 @@
 	},
 	{
 		"constant": true,
-		"inputs": [],
-		"name": "getKey",
-		"outputs": [
+		"inputs": [
 			{
-				"name": "key",
+				"name": "receiver",
+				"type": "address"
+			},
+			{
+				"name": "file_name",
 				"type": "string"
 			}
 		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "getName",
+		"name": "getFileKey",
 		"outputs": [
 			{
-				"name": "name",
+				"name": "",
 				"type": "string"
 			}
 		],
