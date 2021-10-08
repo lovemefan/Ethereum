@@ -60,7 +60,7 @@ contract Corpus {
 
     function getFileKey(address receiver, string memory file_name) public view returns(string){
         // only read your own files
-        require(msg.sender == receiver, "you can only request for yourself");
+        // require(msg.sender == receiver, "you can only request for yourself");
         require(addressFiles.data[receiver].isUsed, "address is empty");
         require(addressFiles.data[receiver].data[file_name].isUsed, "file_name is not exist in block");
         string storage encry_key = addressFiles.data[receiver].data[file_name].encryKey;
@@ -74,7 +74,7 @@ contract Corpus {
 
 
         if (addressFiles.data[receiver].isUsed) {
-
+            addressFiles.data[receiver].isUsed = true;
             addressFiles.data[receiver].size++;
             addressFiles.data[receiver].data[file_name] = Key(encry_key, true);
 
