@@ -53,7 +53,7 @@ class EthereumApi(object):
         """
         return self._contract.caller({'from': address}).getBalances()
 
-    def insert_file_and_key(self, address: str, file_name, encry_key, passphrase):
+    def insert_file_and_key(self, address: str, file_name: str, encry_key: str, passphrase: str):
         """
         向链中插入数据， 其中每个地址为一个用户，为该用户插入一条数据，数据为对应file的加密key
         :param address: 用户地址

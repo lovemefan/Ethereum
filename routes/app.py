@@ -4,20 +4,18 @@
 # @Author  : lovemefan
 # @File    : app.py
 import os
-from time import sleep
 
 from sanic import Sanic
 import sys
-from sanic.exceptions import RequestTimeout, NotFound
-from sanic.response import json
 
-from routes.userRoute.UserRoute import user_route
+
+from routes.ethereumRoute.ethereumRoute import ethereum_route
 
 sys.path.append(os.path.abspath(os.pardir))
 
 
-
 app = Sanic(__name__)
+
 
 def load_banner():
     """load the banner"""
@@ -27,7 +25,8 @@ def load_banner():
     print(banner)
 
 
-app.blueprint(user_route)
+app.blueprint(ethereum_route)
+
 if __name__ == '__main__':
     load_banner()
     port = 8001
