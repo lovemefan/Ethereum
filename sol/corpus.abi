@@ -15,7 +15,7 @@
 				"type": "string"
 			}
 		],
-		"name": "insertvFileKey",
+		"name": "insertFileKey",
 		"outputs": [
 			{
 				"name": "success",

@@ -4,6 +4,7 @@
 # @Email : lovemefan@outlook.com
 # @File : ethereumApi.py
 import json
+import threading
 import time
 import traceback
 
@@ -22,7 +23,7 @@ class EthereumApi(object):
             self._abi = json.loads(file.read())
         # 合约账户节点
         self._default_account = default_account or self._w3.eth.accounts[1]
-        self._contract_address = "0xaD3137bb6543DF54401cc23e67Ce81fCB944Bfa1 "
+        self._contract_address = "0xF4a45BE0272e903Ef45b33e2F823ed846f4B600E"
         self._contract = self._w3.eth.contract(self._contract_address, abi=self._abi)
 
     def create_account(self, passphrase: str):
@@ -52,16 +53,23 @@ class EthereumApi(object):
         """
         return self._contract.caller({'from': address}).getBalances()
 
-    def insert_file_and_key(self, address: str, file_name, encry_key):
+    def insert_file_and_key(self, address: str, file_name, encry_key, passphrase):
         """
         向链中插入数据， 其中每个地址为一个用户，为该用户插入一条数据，数据为对应file的加密key
         :param address: 用户地址
         :param file_name: 文件名
         :param encry_key: 加密字符串
+        :param passphrase: 账户密码，用户解锁才可以交易
         :return: boolean 返回是否执行成功
         :exception
         """
-        return self._contract.caller({'from': address}).insertFileKey(address, file_name, encry_key)
+        self.unlock_account(address, passphrase=passphrase, duration=10)
+        tx_hash = self._contract.functions.insertFileKey(address, file_name, encry_key).transact({'from': address})
+        # 开始挖矿
+        threading.Thread(target=self.start_mining(address)).start()
+        tx_receipt = self._w3.eth.wait_for_transaction_receipt(tx_hash)
+
+        return tx_receipt
 
     def get_file_and_key(self, address: str, file_name):
         """
@@ -107,6 +115,15 @@ class EthereumApi(object):
         time.sleep(5)
         self._w3.geth.miner.stop()
 
+    def unlock_account(self, address, passphrase, duration=None):
+        """
+        解锁某一账户，进行交易
+        :param duration: 持续时间，None为永久解锁
+        :param address: 账户地址
+        :param passphrase: 账户密码
+        :return: bool 是否执行成功
+        """
+        return self._w3.parity.personal.unlock_account(address, passphrase, duration)
 
 
 if __name__ == '__main__':
@@ -115,18 +132,19 @@ if __name__ == '__main__':
     try:
         my_eth = EthereumApi()
         print(my_eth._w3.eth.accounts)
-        message = my_eth.insert_file_and_key(my_account, "test1.jpg", "abcd12345678")
-        print(message)
+        message = my_eth.insert_file_and_key(my_account, "test4.jpg", "abcd12345678abc43", "Tz973158")
+        # print(str(message))
 
-        print(my_eth._w3.eth.get_balance(my_account))
-        my_eth.start_mining(my_account)
-        print(my_eth._w3.eth.get_balance(my_account))
+        # print(my_eth._w3.eth.get_balance(my_account))
+        # my_eth.start_mining(my_account)
+        # print(my_eth._w3.eth.get_balance(my_account))
 
-        key = my_eth.get_file_and_key("0xa09c6E4A292fa10879cb9d3B0560eDedd7aD7488", "test.jpg")
+        key = my_eth.get_file_and_key(my_account, "test4.jpg")
         print(key)
-        print(my_eth.get_last_block())
-        print(my_eth.get_block_number())
-        print(my_eth.get_block(20))
+
+        # print(my_eth.get_last_block())
+        # print(my_eth.get_block_number())
+        # print(my_eth.get_block(20))
     except web3.exceptions.InvalidAddress as e1:
         # 地址非法
         traceback.print_exc()
