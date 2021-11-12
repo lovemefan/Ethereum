@@ -3,10 +3,11 @@
 # @Time    : 2020/12/25 下午3:42
 # @Author  : lovemefan
 # @File    : UserRoute.py
+
 import web3
 from sanic import Blueprint, json
 
-from model import ResponseBody
+from model.ResponseBody import ResponseBody
 from service.ethereumApi import EthereumApi
 
 ethereum_route = Blueprint('user', url_prefix='/api/user', version=1)
@@ -21,12 +22,11 @@ async def create_account(request):
     :return:
     """
     passphrase = request.json.get('passphrase', None)
-
     if passphrase is None:
-        return json(ResponseBody(message="please input passphrase parameter"))
+        return json(ResponseBody(message="please input passphrase parameter").__dict__)
     else:
         result = eth_api.create_account(passphrase)
-        return json(ResponseBody(message="SUCCESS", data=result))
+        return json(ResponseBody(message="SUCCESS", data=result).__dict__)
 
 
 @ethereum_route.route('/insert_file_and_key', methods=['POST'])
@@ -37,15 +37,15 @@ async def insert_file_and_key(request):
     :return:
     """
     address = request.json.get('address', None)
-    file_name = request.json.get('file_name', None)
+    file_name = request.json.get('data', None)
     encry_key = request.json.get('encry_key', None)
     passphrase = request.json.get('passphrase', None)
 
     if passphrase and address and file_name and encry_key is None:
-        return json(ResponseBody(message="please make sure input all parameters"))
+        return json(ResponseBody(message="please make sure input all parameters").__dict__)
     else:
-        result = eth_api.insert_file_and_key(address, file_name, encry_key, passphrase)
-        return json(ResponseBody(message="SUCCESS", data=result))
+        result = await eth_api.insert_file_and_key(address, file_name, encry_key, passphrase)
+        return json(ResponseBody(message="SUCCESS", data=result).__dict__)
 
 
 @ethereum_route.route('/get_file_and_key', methods=['POST'])
@@ -58,11 +58,11 @@ async def get_file_and_key(request):
     address = request.json.get('address', None)
     file_name = request.json.get('file_name', None)
 
-    if address and file_name  is None:
-        return json(ResponseBody(message="please make sure input all parameters"))
+    if address and file_name is None:
+        return json(ResponseBody(message="please make sure input all parameters").__dict__)
     else:
-        result = eth_api.insert_file_and_key(address, file_name)
-        return json(ResponseBody(message="SUCCESS", data=result))
+        result = eth_api.get_file_and_key(address, file_name)
+        return json(ResponseBody(message="SUCCESS", data=result).__dict__)
 
 
 @ethereum_route.route('/get_last_block', methods=['POST'])
@@ -73,7 +73,9 @@ async def get_last_block(request):
     :return:
     """
     result = eth_api.get_last_block()
-    return json(ResponseBody(message="SUCCESS", data=result))
+    result = str(result).replace('HexBytes(', '').replace(')', '')
+    result = eval(result)
+    return json(ResponseBody(message="SUCCESS", data=result).__dict__)
 
 
 @ethereum_route.route('/get_block_number', methods=['POST'])
@@ -84,7 +86,23 @@ async def get_block_number(request):
     :return:
     """
     result = eth_api.get_block_number()
-    return json(ResponseBody(message="SUCCESS", data=result))
+    return json(ResponseBody(message="SUCCESS", data=result).__dict__)
+
+
+@ethereum_route.route('/get_balances', methods=['POST'])
+async def get_balances(request):
+    """
+    获取区块的数量
+    :param request:
+    :return:
+    """
+    address = request.json.get('address', None)
+
+    if address is None:
+        return json(ResponseBody(message="please make sure input address").__dict__)
+    else:
+        result = eth_api.get_account(address)
+        return json(ResponseBody(message="SUCCESS", data=str(result)).__dict__)
 
 
 @ethereum_route.route('/get_block', methods=['POST'])
@@ -96,7 +114,9 @@ async def get_block(request):
     """
     index = int(request.json.get('index', 0))
     result = eth_api.get_block(index)
-    return json(ResponseBody(message="SUCCESS", data=result))
+    result = str(result).replace('HexBytes(', '').replace(')', '')
+    result = eval(result)
+    return json(ResponseBody(message="SUCCESS", data=result).__dict__)
 
 
 @ethereum_route.route('/unlock_account', methods=['POST'])
@@ -111,28 +131,13 @@ async def unlock_account(request):
     duration = request.json.get('duration', None)
     duration = duration and int(duration)
     if address and passphrase is None:
-        return json(ResponseBody(message="please make sure input all parameters"))
+        return json(ResponseBody(message="please make sure input all parameters").__dict__)
 
     result = eth_api.unlock_account(address, passphrase, duration)
-    return json(ResponseBody(message="SUCCESS", data=result))
+    return json(ResponseBody(message="SUCCESS", data=result).__dict__)
 
 
-@ethereum_route.route('/start_mining', methods=['POST'])
-async def start_mining(request):
-    """
-    获取区块的数量
-    :param request:
-    :return:
-    """
-    address = request.json.get('address', None)
-    thread_count = request.json.get('thread_count', None)
-    thread_count = thread_count and int(thread_count)
 
-    if address and thread_count is None:
-        return json(ResponseBody(message="please make sure input all parameters"))
-
-    result = eth_api.start_mining(address, thread_count)
-    return json(ResponseBody(message="SUCCESS", data=result))
 
 
 @ethereum_route.exception(web3.exceptions.InvalidAddress)
@@ -141,7 +146,7 @@ async def invalid_address(request, exception):
         message="ERROR, address is not exist",
         code=400
     )
-    return json(response.__dict__(), 400)
+    return json(response.__dict__, 400)
 
 
 @ethereum_route.exception(web3.exceptions.ContractLogicError)
@@ -150,7 +155,7 @@ async def contract_logic_error(request, exception):
         message=f"ERROR, {str(exception)}",
         code=400
     )
-    return json(response.__dict__(), 400)
+    return json(response.__dict__, 400)
 
 
 @ethereum_route.exception(web3.exceptions.BlockNotFound)
@@ -159,11 +164,25 @@ async def block_not_found(request, exception):
         message=f"ERROR, Block Not Found",
         code=400
     )
-    return json(response.__dict__(), 400)
+    return json(response.__dict__, 400)
 
 
+@ethereum_route.exception(web3.exceptions.ValidationError)
+async def block_not_found(request, exception):
+    response = ResponseBody(
+        message=f"ERROR, {str(exception)}",
+        code=400
+    )
+    return json(response.__dict__, 400)
 
 
+import json as js
 
 
-
+@ethereum_route.exception(ValueError)
+async def block_not_found(request, exception):
+    response = ResponseBody(
+        message=eval(str(exception)),
+        code=400
+    )
+    return json(response.__dict__, 400)

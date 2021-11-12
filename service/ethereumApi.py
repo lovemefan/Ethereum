@@ -19,11 +19,11 @@ class EthereumApi(object):
 
     def __init__(self, default_account=None):
         self._w3 = Web3(Web3.HTTPProvider('http://222.197.219.26:8545'))
-        with open("../sol/corpus.abi") as file:
+        with open("sol/corpus.abi") as file:
             self._abi = json.loads(file.read())
         # 合约账户节点
         self._default_account = default_account or self._w3.eth.accounts[1]
-        self._contract_address = "0xF4a45BE0272e903Ef45b33e2F823ed846f4B600E"
+        self._contract_address = "0x9890c4164D8bbdff6448AC801cdCca35c178Fda8"
         self._contract = self._w3.eth.contract(self._contract_address, abi=self._abi)
 
     def create_account(self, passphrase: str):
@@ -53,7 +53,15 @@ class EthereumApi(object):
         """
         return self._contract.caller({'from': address}).getBalances()
 
-    def insert_file_and_key(self, address: str, file_name: str, encry_key: str, passphrase: str):
+    def get_account(self, address):
+        """
+        获取当前账户的余额
+        :param address:
+        :return:
+        """
+        return self._w3.eth.get_balance(address)
+
+    async def insert_file_and_key(self, address: str, file_name: str, encry_key: str, passphrase: str):
         """
         向链中插入数据， 其中每个地址为一个用户，为该用户插入一条数据，数据为对应file的加密key
         :param address: 用户地址
@@ -64,11 +72,11 @@ class EthereumApi(object):
         :exception
         """
         self.unlock_account(address, passphrase=passphrase, duration=10)
-        tx_hash = self._contract.functions.insertFileKey(address, file_name, encry_key).transact({'from': address})
+        config = {'from': address, 'gas': 8000000, 'gasPrice': 128000000000}
+        tx_hash = self._contract.functions.insertFileKey(address, file_name, encry_key).transact(config)
         # 开始挖矿
-        threading.Thread(target=self.start_mining(address)).start()
+        await self.start_mining(address)
         tx_receipt = self._w3.eth.wait_for_transaction_receipt(tx_hash)
-
         return tx_receipt
 
     def get_file_and_key(self, address: str, file_name):
@@ -78,7 +86,7 @@ class EthereumApi(object):
         :param file_name: 文件名
         :return: 返回密钥
         """
-        return self._contract.caller({'from': address}).getFileKey(address, file_name)
+        return dict(self._contract.caller({'from': address}).getFileKey(address, file_name))
 
     def get_last_block(self):
         """
@@ -100,20 +108,23 @@ class EthereumApi(object):
         :param index:区块下标
         :return:
         """
-        return self._w3.eth.get_block(index)
+        return dict(self._w3.eth.get_block(index))
 
-    def start_mining(self, address: str, thread_count=1):
+    async def start_mining(self, address: str, thread_count=1, duration: int=5):
         """
         开始挖矿
         :param thread_count: 启动挖矿的线程数，为了不影响性能，默认为1
         :param address:
+        :param time 默认挖矿时间
         :return:
         """
+        print(f"start mining ⛏⛏⛏ {address} thread:{thread_count} duration:{duration}...")
         self._w3.geth.miner.set_etherbase(address)
         # 挖5秒的矿
         self._w3.geth.miner.start(thread_count)
-        time.sleep(5)
+        time.sleep(duration)
         self._w3.geth.miner.stop()
+        print(f"mining ⛏⛏⛏ {address} finished ...")
 
     def unlock_account(self, address, passphrase, duration=None):
         """

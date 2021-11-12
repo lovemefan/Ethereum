@@ -6,7 +6,7 @@
 import json
 
 
-class ResponseBody:
+class ResponseBody(object):
     """The response body of http"""
 
     def __init__(self, message='', data='', code=200):
@@ -15,4 +15,4 @@ class ResponseBody:
         self.code = code
 
     def to_json_string(self):
-        return json.loads(self.__dict__)
+        return json.dumps(self.__dict__).encode('utf-8')
